@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Check } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { categories, type Book } from "@/lib/books";
 
@@ -252,7 +252,7 @@ export function BookForm({ book, mode }: { book?: Book; mode: "add" | "edit" }) 
     <form className="form-card book-form" onSubmit={(event) => { event.preventDefault(); setSaved(true); }}>
       <Link href={editing ? "/my-books" : "/books"} className="back-link"><ArrowLeft size={15} /> {editing ? "Back to my books" : "Back to the shelves"}</Link>
       <p className="eyebrow"><span className="eyebrow-line" />{editing ? "A little bookshelf tending" : "Add to the collection"}</p>
-      <h1>{editing ? <>Edit a <em>story.</em></> : <>Add a <em>good read.</em></h1>
+      <h1>{editing ? <>Edit a <em>story.</em></> : <>Add a <em>good read.</em></>}</h1>
       <p className="form-description">Share the details so another reader can find their next favorite.</p>
       <div className="form-grid">
         <label className="form-field">Book title<input name="title" defaultValue={book?.title} placeholder="The name on the cover" required /></label>

@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import { ArrowLeft, Check } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
+import { apiJson, authenticatedApiFetch, uploadBookImage } from "@/lib/api";
+import { useToast } from "@/components/toast-provider";
 import { categories, type Book } from "@/lib/books";
 
 export function AccountForm({
@@ -246,25 +248,92 @@ export function AccountForm({
 }
 
 export function BookForm({ book, mode }: { book?: Book; mode: "add" | "edit" }) {
-  const [saved, setSaved] = useState(false);
   const editing = mode === "edit";
+  const [busy, setBusy] = useState(false);
+  const [imageName, setImageName] = useState("");
+  const router = useRouter();
+  const { showToast } = useToast();
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setBusy(true);
+    const values = new FormData(event.currentTarget);
+
+    try {
+      const file = values.get("image");
+      if (!(file instanceof File)) {
+        throw new Error("Choose a book cover image to upload.");
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        throw new Error("Book cover images must be 10 MB or smaller.");
+      }
+      if (file.size > 0 && !file.type.startsWith("image/")) {
+        throw new Error("Choose a valid image file for the book cover.");
+      }
+
+      const image = file.size > 0 ? await uploadBookImage(file) : book?.image;
+      if (!image) {
+        throw new Error("Choose a book cover image to upload.");
+      }
+
+      const payload = {
+        title: String(values.get("title") ?? "").trim(),
+        author: String(values.get("author") ?? "").trim(),
+        category: String(values.get("category") ?? ""),
+        description: String(values.get("description") ?? "").trim(),
+        totalCopies: Number(values.get("totalCopies")),
+        image,
+      };
+      const response = await authenticatedApiFetch(
+        editing && book ? `/books/${encodeURIComponent(book.id)}` : "/books",
+        {
+          method: editing ? "PATCH" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        },
+      );
+      const savedBook = await apiJson<Book>(response);
+      showToast(editing ? "Book details updated." : "Book added to the library.");
+      router.push(editing ? "/my-books" : `/books/${savedBook.id}`);
+      router.refresh();
+    } catch (reason) {
+      showToast(
+        reason instanceof Error ? reason.message : "Could not save this book.",
+        "error",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
-    <form className="form-card book-form" onSubmit={(event) => { event.preventDefault(); setSaved(true); }}>
+    <form className="form-card book-form" onSubmit={handleSubmit}>
       <Link href={editing ? "/my-books" : "/books"} className="back-link"><ArrowLeft size={15} /> {editing ? "Back to my books" : "Back to the shelves"}</Link>
       <p className="eyebrow"><span className="eyebrow-line" />{editing ? "A little bookshelf tending" : "Add to the collection"}</p>
       <h1>{editing ? <>Edit a <em>story.</em></> : <>Add a <em>good read.</em></>}</h1>
       <p className="form-description">Share the details so another reader can find their next favorite.</p>
       <div className="form-grid">
-        <label className="form-field">Book title<input name="title" defaultValue={book?.title} placeholder="The name on the cover" required /></label>
-        <label className="form-field">Author<input name="author" defaultValue={book?.author} placeholder="Who wrote it?" required /></label>
+        <label className="form-field">Book title<input name="title" defaultValue={book?.title} placeholder="The name on the cover" maxLength={200} required /></label>
+        <label className="form-field">Author<input name="author" defaultValue={book?.author} placeholder="Who wrote it?" maxLength={160} required /></label>
         <label className="form-field">Category<select name="category" defaultValue={book?.category ?? "Fiction"}>{categories.filter((item) => item !== "All").map((item) => <option key={item}>{item}</option>)}</select></label>
-        <label className="form-field">Year published<input name="year" type="number" min="1400" max="2026" defaultValue={book?.year} placeholder="2024" required /></label>
-        <label className="form-field form-field-wide">A little about this book<textarea name="description" rows={4} defaultValue={book?.description} placeholder="What might a reader love about it?" required /></label>
-        <label className="form-field form-field-wide">ISBN <span className="optional-label">Optional</span><input name="isbn" defaultValue={book?.isbn} placeholder="978…" /></label>
+        <label className="form-field">Total copies<input name="totalCopies" type="number" min="1" step="1" defaultValue={book?.totalCopies ?? 1} required /></label>
+        <label className="form-field form-field-wide">A little about this book<textarea name="description" rows={4} defaultValue={book?.description} placeholder="What might a reader love about it?" maxLength={5000} required /></label>
+        <label className="form-field form-field-wide">
+          Book cover image {editing && <span className="optional-label">Optional; keep the current cover or upload a replacement</span>}
+          <input
+            name="image"
+            type="file"
+            accept="image/*"
+            required={!editing}
+            onChange={(event) => setImageName(event.target.files?.[0]?.name ?? "")}
+          />
+          {imageName && <span className="selected-file">{imageName}</span>}
+        </label>
       </div>
-      <label className="form-checkbox"><input type="checkbox" name="available" defaultChecked={book?.available ?? true} /><span>Available for borrowing</span></label>
-      <button className="button button-primary form-submit" type="submit">{saved ? <><Check size={16} /> Saved for this demo</> : editing ? "Save book details" : "Add book to my shelf"}</button>
-      {saved && <p className="form-success" role="status">Your changes are previewed locally only; no data was saved to a server.</p>}
+      {editing && book && <p className="form-help">Currently available: {book.availableCopies} of {book.totalCopies}. Copy changes are adjusted against active borrows.</p>}
+      <button className="button button-primary form-submit" type="submit" disabled={busy}>
+        {busy ? "Saving…" : editing ? "Save book details" : "Add book to my shelf"}
+      </button>
     </form>
   );
 }

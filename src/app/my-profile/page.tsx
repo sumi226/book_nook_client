@@ -1,6 +1,6 @@
 import { requireUser } from "@/lib/dal";
 
-export const metadata = { title: "My profile | Book Nook" };
+export const metadata = { title: "My Profile" };
 
 export default async function MyProfilePage() {
   const user = await requireUser("/my-profile");

@@ -1,33 +1,31 @@
+import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpRight, Star } from "lucide-react";
-import type { CSSProperties } from "react";
+import { ArrowUpRight } from "lucide-react";
 import type { Book } from "@/lib/books";
+import { isBookAvailable } from "@/lib/books";
 
 export function BookCover({
   book,
   large = false,
 }: {
-  book: Book;
+  book: Pick<Book, "image" | "title">;
   large?: boolean;
 }) {
   return (
-    <div
-      className={`book-cover ${large ? "book-cover-large" : ""}`}
-      style={{ "--cover-color": book.color } as CSSProperties}
-      aria-label={`Illustrated cover for ${book.title}`}
-      role="img"
-    >
-      <span className="cover-topline">THE BOOK NOOK LIBRARY</span>
-      <span className="cover-motif" aria-hidden="true">{book.motif}</span>
-      <span className="cover-title">{book.title}</span>
-      <span className="cover-rule" />
-      <span className="cover-author">{book.author}</span>
-      <span className="cover-bottomline">A STORY TO PASS ALONG</span>
+    <div className={`book-cover ${large ? "book-cover-large" : ""}`}>
+      <Image
+        src={book.image}
+        alt={`${book.title} cover`}
+        fill
+        unoptimized
+        sizes={large ? "(max-width: 700px) 55vw, 245px" : "(max-width: 700px) 60vw, 190px"}
+        className="book-cover-image"      />
     </div>
   );
 }
 
 export function BookCard({ book }: { book: Book }) {
+  const available = isBookAvailable(book);
   return (
     <article className="book-card">
       <Link
@@ -36,8 +34,8 @@ export function BookCard({ book }: { book: Book }) {
         aria-label={`View ${book.title} by ${book.author}`}
       >
         <BookCover book={book} />
-        <span className={`availability ${book.available ? "is-available" : ""}`}>
-          <span /> {book.available ? "On the shelf" : "Currently borrowed"}
+        <span className={`availability ${available ? "is-available" : ""}`}>
+          <span /> {available ? `${book.availableCopies} available` : "Not Available"}
         </span>
       </Link>
       <div className="book-card-copy">
@@ -47,12 +45,21 @@ export function BookCard({ book }: { book: Book }) {
             <h3><Link href={`/books/${book.id}`}>{book.title}</Link></h3>
             <p className="book-author">{book.author}</p>
           </div>
-          <span className="book-rating"><Star size={13} fill="currentColor" /> {book.rating}</span>
         </div>
         <Link className="book-card-link" href={`/books/${book.id}`}>
           View details <ArrowUpRight size={15} />
         </Link>
       </div>
     </article>
+  );
+}
+
+export function BookCardSkeleton() {
+  return (
+    <div className="book-card-skeleton" aria-hidden="true">
+      <div className="book-card-skeleton-art" />
+      <div className="book-card-skeleton-line" />
+      <div className="book-card-skeleton-line short" />
+    </div>
   );
 }

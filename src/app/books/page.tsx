@@ -1,6 +1,6 @@
 import { Catalog } from "@/components/catalog";
 
-export const metadata = { title: "Browse the shelves | Book Nook" };
+export const metadata = { title: "All Books" };
 
 export default async function BooksPage({
   searchParams,

@@ -36,12 +36,16 @@ export const auth = betterAuth({
   trustedOrigins: [appOrigin],
   emailAndPassword: {
     enabled: true,
+    autoSignIn: false,
     minPasswordLength: 6,
     maxPasswordLength: 128,
   },
   ...(socialProviders ? { socialProviders } : {}),
   plugins: [
     jwt({
+      jwks: {
+        keyPairConfig: { alg: "EdDSA" },
+      },
       jwt: {
         definePayload: ({ user }) => ({
           email: user.email,

@@ -1,7 +1,7 @@
 import { AccountForm } from "@/components/book-forms";
 import { safeReturnPath } from "@/lib/dal";
 
-export const metadata = { title: "Join the nook | Book Nook" };
+export const metadata = { title: "Join the Nook" };
 export default async function RegisterPage({
   searchParams,
 }: {

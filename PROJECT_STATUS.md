@@ -1,6 +1,6 @@
 # Book Nook — Project Status
 
-**Status:** Frontend and Express/MongoDB API implemented; verification pending  
+**Status:** Better Auth integration implemented; local configuration and end-to-end verification pending  
 **Updated:** 2026-11-02
 
 ## Delivered
@@ -9,7 +9,13 @@
 - Home page with three-slide Swiper hero, latest six titles, category browsing, borrowing guide, reader reviews, and newsletter demo.
 - All requested pages: `/`, `/books`, `/books/[id]`, `/login`, `/register`, `/add-book`, `/my-books`, `/edit-book/[id]`, `/my-borrows`, and a custom 404.
 - Consistent illustrated book cards and responsive catalog with search, category filters, sorting, loading feedback, and empty results.
-- UI-only login/register and book-management forms; borrow and delete confirmation dialogs; return-book demo interaction.
+- Better Auth email/password registration and login backed by the official MongoDB adapter; Google OAuth support when provider credentials are configured.
+- Registration validates a photo URL and requires a six-character password containing uppercase and lowercase letters; successful registration directs readers to sign in.
+- Persistent session-aware navigation with login/register links when signed out and a user-photo dropdown with profile and logout when signed in.
+- Server-protected `/add-book`, `/my-books`, `/my-borrows`, `/books/[id]`, `/edit-book/[id]`, and `/my-profile` pages; unauthenticated visitors are sent to login with a safe callback path.
+- JWT plugin tokens are requested for Express API calls and verified with the configured Better Auth JWKS, issuer, audience, and EdDSA algorithm. API identity and ownership are derived only from verified token claims.
+- UI-only forgot-password message; password reset is intentionally not implemented.
+- Book-management forms, borrow and delete confirmation dialogs, and return-book demo interaction.
 - Typed, realistic local fixtures only. Demo actions are in-memory and do not call an API or persist data.
 - Added Framer Motion, Lucide React, and Swiper dependencies.
 - Added a standalone Express.js API in `server/` for the books and borrowing
@@ -24,16 +30,18 @@
 
 ## Scope and limitations
 
-- Login and registration are mock screens only; no real authentication is performed.
 - Borrowing, returns, newsletter signup, and book changes are demonstrations and are not persisted.
-- The frontend still uses local demo data and its forms do not call the API.
-- The existing Next.js Better Auth configuration must be pointed at the same
-  Atlas database and `BETTER_AUTH_SECRET` configured for `server/` before the
-  frontend's session cookies can authorize API requests.
+- Book/catalog/borrow/return/newsletter features still use local demo data and do not call the API; Better Auth identity and sessions are persisted independently.
+- Configure the client and API with the same MongoDB database and matching
+  Better Auth URL, JWKS endpoint, issuer, audience, and frontend origin before
+  exercising the live authentication/API flow. Configure Google OAuth
+  credentials to enable Google sign-in.
 - Local mock book covers are CSS illustrations and require no third-party image service.
 - Dependency installation reported 16 moderate audit findings. No automatic audit fixes were applied.
 
 ## Verification
 
-- Frontend verification previously stalled; see the frontend setup above.
-- Backend build and route tests are pending.
+- Express TypeScript build passes.
+- The initial Next.js production build passed before the latest navigation/session changes; a final build and lint run are pending.
+- API integration tests could not start their MongoDB replica set in this environment (`mongodb-memory-server` timed out), so route integration assertions remain unverified here.
+- End-to-end registration, login, Google OAuth, page reload, and logout verification requires a configured local MongoDB instance and Google OAuth credentials.

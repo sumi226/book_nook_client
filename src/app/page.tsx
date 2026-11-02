@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { ArrowUpRight, BookMarked, BookOpen, Heart, Leaf, Sparkles } from "lucide-react";
-import { BookCard } from "@/components/book-card";
 import { HeroCarousel } from "@/components/hero-carousel";
 import { NewsletterForm } from "@/components/newsletter-form";
-import { featuredBooks } from "@/lib/books";
+import { LatestBooks } from "@/components/latest-books";
+
+export const metadata = { title: "Home" };
 
 const categories = [
   { name: "Fiction", note: "Worlds to get lost in", mark: "01", icon: BookOpen },
@@ -22,14 +23,14 @@ const reviews = [
 export default function Home() {
   return (
     <main id="main-content">
-      <div id="main-content"><HeroCarousel /></div>
+      <HeroCarousel />
 
       <section className="latest-section section-wrap" aria-labelledby="latest-title">
         <div className="section-heading">
           <div><p className="eyebrow"><span className="eyebrow-line" />Fresh from the shelves</p><h2 id="latest-title">A few good stories <em>to begin with.</em></h2></div>
           <div className="section-heading-aside"><p>For the days you want to wander somewhere new—or find your way back to a familiar favorite.</p><Link className="text-link" href="/books">Browse all books <ArrowUpRight size={15} /></Link></div>
         </div>
-        <div className="latest-grid">{featuredBooks.map((book) => <BookCard key={book.id} book={book} />)}</div>
+        <LatestBooks />
         <p className="collection-note">BOOKS ARE SHARED HERE, NOT SOLD. PICK A STORY AND PASS IT ALONG.</p>
       </section>
 
